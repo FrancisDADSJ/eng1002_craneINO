@@ -22,7 +22,8 @@
 #define PhotoDiodePin 2
 
 Adafruit_SH1107 display = Adafruit_SH1107(64,128,&Wire);
-char motorStopMessage[]="MOTOR TURNED OFF";
+String motorStopMessage1="MOTOR TURNED OFF";
+String motorStopMessage2="Press SW3 to POWER ON";
 char motorDirection1[]="ACW";
 char motorDirection2[]="CW";
 String directionMessage = "Direction: ";
@@ -42,7 +43,8 @@ int percentageSpeed = 0;
 bool motorDirection = true;
 int rotationCount = 0;
 int rotationsDisplay = 0;
-
+int countStop = 0;
+int holder = 0;
 
 void setup() {
     Serial.begin(9600);
@@ -119,16 +121,22 @@ void loop() {
   display.clearDisplay();
   }
 else{
-  int holder = 0;
-  while(holder ==0){
+      holder = 1;
+      timeNow = millis();
+      while(millis()<timeNow+250){}
+
+  do{
+    
       display.clearDisplay();
       analogWrite(MotorEnable,0);
       display.setCursor(10,0); //aw
-      display.println(motorStopMessage);
+      display.println(motorStopMessage1+motorStopMessage2);
       display.display();
       holder = digitalRead(StopSwitch);
+      timeNow = millis();
+      while(millis()<timeNow+250){}
       }
-
+      while(holder == 1);
 }
 }
 //Photodiode Control
