@@ -1,15 +1,12 @@
 //Libraries used
 //#include <LiquidCrystal.h>
-
 #include <Adafruit_SSD1306.h> //display libraries
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH110X.h>
 #include <Wire.h> //Interfaces for the display
 #include <SPI.h>
-
-
-
-
+//LoadCell definition
+#define LoadCellPin A6
 //Motor pin definitions
 #define MotorEnable 5
 #define MotorInput1 4
@@ -20,7 +17,6 @@
 #define StopSwitch 13
 //Photodiode definitions
 #define PhotoDiodePin 2
-
 Adafruit_SH1107 display = Adafruit_SH1107(64,128,&Wire);
 String motorStopMessage1="MOTOR TURNED OFF";
 String motorStopMessage2="Press SW3 to POWER ON";
@@ -31,7 +27,7 @@ String speedMessage1= "Speed: ";
 char speedMessage2 = '%';
 String rotationMessage1 = "Rotations: ";
 
-//Delay definitions
+//Delay variables
 int period = 10;
 int lcdStartPeriod = 200;
 unsigned long timeNow = 0;
@@ -45,7 +41,17 @@ int rotationCount = 0;
 int rotationsDisplay = 0;
 int countStop = 0;
 int holder = 0;
-
+//LoadCell Amp values
+int loadCellByte = 0;
+double loadCellVoltage = 0;
+double loadCellVoltageConvConstant = 0.003226;
+String messageLoad = " Load: ";
+String loadValueMesssge="";
+String newtonSymbol = " N";
+float loadInNewtons = 0.0;
+float gravitationalAcceleration= 9.81;
+float massConvConstant = 2;
+float mass=0.0;
 void setup() {
     Serial.begin(9600);
     delay(500);
@@ -112,7 +118,9 @@ void loop() {
   display.setCursor(0,20);
   display.println(speedMessage1+percentageSpeed+speedMessage2);
   display.display();
-
+  //Display Load
+ // display.setCursor(0,)
+  CheckAndPrintCraneLoad();
   display.setCursor(0,40);
   rotationsDisplay = rotationCount/2;
   display.print(rotationMessage1+rotationsDisplay);
@@ -138,12 +146,24 @@ else{
       }
       while(holder == 1);
 }
+
 }
 //Photodiode Control
 void RotationCount(){
   if (motorDirection == true){
 	rotationCount++;}
   else{rotationCount--;}
+}
+void CheckAndPrintCraneLoad(){
+loadCellByte = analogRead(LoadCellPin);
+loadCellVoltage = loadCellByte * loadCellVoltageConvConstant;
+mass = 2* loadCellVoltage;
+loadInNewtons = (gravitationalAcceleration * mass) ;
+loadValueMesssge = String(loadInNewtons,2);
+ 	 display.setCursor(0,50); //aw
+    display.println(messageLoad+loadValueMesssge+newtonSymbol);
+    display.display();
+  
 }
 
 
