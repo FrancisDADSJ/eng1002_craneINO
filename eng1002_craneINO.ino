@@ -50,10 +50,31 @@ String loadValueMesssge="";
 String newtonSymbol = " N";
 float loadInNewtons = 0.0;
 float gravitationalAcceleration= 9.81;
-float massConvConstant = 2;
+float massConvConstant = 1.89;
 float mass=0.0;
+// Comparable variables for output
+
+//int upperSpeed;//for upper boundary of speed variation
+//int lowerSpeed;//for lower boundary of speed variation
+//float currentSpeed;// store current speed value
+//float oldSpeed;// store previous speed value
+float upperMass;// for upper boundary of load variation
+float lowerMass;// for lower boundary of load variation
+float currentMass;// store current mass value
+float oldMass;// store previous mass value
+// Serial Place holder
+String speedHolder = "s";
+
+
+String loadValueMessage;
+
+
+String serialLoad;
+String serialSpeed;
+String serialDirection;
+String serialRotation;
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
     delay(500);
     display.begin(0x3C,true);
     pinMode(MotorEnable,OUTPUT);
@@ -65,7 +86,6 @@ void setup() {
   	pinMode(PhotoDiodePin,INPUT);
     pinMode(13,INPUT);
   	attachInterrupt(digitalPinToInterrupt(PhotoDiodePin),RotationCount,RISING);
-   // attachInterrupt(digitalPinToInterrupt(StopSwitch),stopMotor,FALLING);  
     display.setRotation(3); //values 1 - 4
     display.setTextSize(1); // from 1 to 8 [pixel 6x8 for size=1] with 1 pixel spacing
     display.setTextColor(WHITE, BLACK);
@@ -83,10 +103,14 @@ void loop() {
 
   if(digitalRead(ClockwiseSwitch) == LOW){
       motorDirection = true;
+      String rotationDirectionHolder1 = "d0" ;
+      Serial.println(rotationDirectionHolder1);
   }
   else{}
   if(digitalRead(AntiClockwiseSwitch) == LOW){
      motorDirection = false;
+     String rotationDirectionHolder2 = "d1" ;
+     Serial.println(rotationDirectionHolder2);
   }
   else{}
   //Reading Motor Control Speed Potentiometer
@@ -94,8 +118,6 @@ void loop() {
   potValue = analogRead(PotPin);
   analogWrite(MotorEnable,potValue/4);
   //Direction Logic
- // motorDirection = digitalRead(MotorModePin);
-
   if(motorDirection == true){
   	digitalWrite(MotorInput1,LOW);
   	digitalWrite(MotorInput2,HIGH);
@@ -111,9 +133,15 @@ void loop() {
    	display.setCursor(13,0); //aw
     display.println(directionMessage+motorDirection1);
     display.display();
+    
   }
   //Speed Calculation
   percentageSpeed = ((potValue/4.0)/255.0)*100;
+  
+  String serialPercentageSpeed = speedHolder+percentageSpeed;
+
+  Serial.println(serialPercentageSpeed);
+
   // Display Messages
   display.setCursor(0,20);
   display.println(speedMessage1+percentageSpeed+speedMessage2);
@@ -153,17 +181,33 @@ void RotationCount(){
   if (motorDirection == true){
 	rotationCount++;}
   else{rotationCount--;}
+  String rotationHolder ="r";
+  String serialCount = rotationHolder+rotationCount;
+  Serial.println(serialCount);
 }
+
 void CheckAndPrintCraneLoad(){
+  
 loadCellByte = analogRead(LoadCellPin);
 loadCellVoltage = loadCellByte * loadCellVoltageConvConstant;
-mass = 2* loadCellVoltage;
-loadInNewtons = (gravitationalAcceleration * mass) ;
-loadValueMesssge = String(loadInNewtons,2);
- 	 display.setCursor(0,50); //aw
-    display.println(messageLoad+loadValueMesssge+newtonSymbol);
-    display.display();
+currentMass = massConvConstant * loadCellVoltage;
+upperMass = currentMass+0.25;
+lowerMass = currentMass-0.25;
+if(currentMass!=oldMass){
   
+  if((oldMass<=lowerMass)||(oldMass >=upperMass)){
+    String loadHolder = "l";
+    loadInNewtons = (gravitationalAcceleration * currentMass) ;
+    oldMass = currentMass; //Stores the current mass as old mass for the next check
+    loadValueMessage = String(loadInNewtons,2);
+    String serialLoad = loadHolder+loadValueMessage;
+    Serial.println(serialLoad);
+ 	  
+    }
+  display.setCursor(0,50); //aw
+    display.println(messageLoad+loadValueMessage+newtonSymbol);
+    display.display();}
+    
 }
 
 
